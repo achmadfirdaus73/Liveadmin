@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Absensi</title>
+    <!-- Vue.js dan Vuetify -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css"/>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxB0A-uK03Kk8oKjT/hFzKx4z8w4q9w7/gW5i7k9Y=" crossorigin="" />
+</head>
+
+<body>
+    <div id="app">
+        <v-app>
+            <v-main class="bg-gray-100 min-h-screen">
+                <div class="container mx-auto px-4 py-8">
+                    <v-card class="mx-auto rounded-xl shadow-lg p-6 my-4" max-width="90%" v-if="!userLoggedIn">
+                        <v-card-title class="text-2xl font-bold text-center">Login Admin</v-card-title>
+                        <v-card-text>
+                            <v-btn color="primary" block large @click="loginWithGoogle" rounded class="font-bold text-white shadow-md">
+                                <v-icon left>mdi-google</v-icon>
+                                Login dengan Google
+                            </v-btn>
+                        </v-card-text>
+                    </v-card>
+
+                    <v-card class="mx-auto rounded-xl shadow-lg p-6 my-4 data-card" v-if="userLoggedIn">
+                        <v-card-title class="text-2xl font-bold text-center">Dashboard Admin</v-card-title>
+                        <v-card-subtitle class="text-center text-gray-600">Selamat datang, {{ userEmail }}!</v-card-subtitle>
+
+                        <div id="map" class="map-container my-4 shadow-inner"></div>
+
+                        <div class="table-container my-4">
+                            <v-data-table :headers="headers" :items="Object.values(locations)" :items-per-page="5" class="elevation-1 rounded-lg">
+                                <template v-slot:item.lat="{ item }">
+                                    {{ item.lat.toFixed(6) }}
+                                </template>
+                                <template v-slot:item.lng="{ item }">
+                                    {{ item.lng.toFixed(6) }}
+                                </template>
+                                <template v-slot:item.accuracy="{ item }">
+                                    {{ item.accuracy.toFixed(2) }} m
+                                </template>
+                                <template v-slot:item.timestamp="{ item }">
+                                    {{ new Date(item.unixTime).toLocaleString('id-ID') }}
+                                </template>
+                                <template v-slot:item.status="{ item }">
+                                    <v-chip :color="item.status === 'active' ? 'green' : 'red'" dark small rounded class="font-semibold text-xs">
+                                        {{ item.status }}
+                                    </v-chip>
+                                </template>
+                                <template v-slot:item.actions="{ item }">
+                                    <v-btn small color="info" @click="showLocationOnMap(item)" rounded class="font-semibold text-xs">
+                                        Lihat
+                                    </v-btn>
+                                </template>
+                            </v-data-table>
+                        </div>
+                        <v-btn color="error" block large @click="logout" rounded class="font-bold text-white shadow-md">
+                            Logout
+                        </v-btn>
+                    </v-card>
+
+                    <!-- Message Box -->
+                    <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" :color="snackbar.color" top rounded="pill">
+                        <div class="text-center font-semibold">{{ snackbar.message }}</div>
+                    </v-snackbar>
+                </div>
+            </v-main>
+        </v-app>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Vue.js dan Vuetify -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20n69zEa9sK0JgA3sM3q08f/c9Jb/t3Bf9tG5J8d+O/" crossorigin=""></script>
+    <script src="main.js">
+        
+    </script>
+</body>
+
+</html>
