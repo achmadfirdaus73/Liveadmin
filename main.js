@@ -40,6 +40,7 @@ const app = new Vue({
         }
     }),
     mounted() {
+        this.initializeMap();
         this.monitorAuthStatus();
     },
     methods: {
@@ -75,11 +76,7 @@ const app = new Vue({
                                 this.userLoggedIn = true;
                                 this.userEmail = user.email;
                                 this.addNotification('green', 'Berhasil login sebagai admin!');
-                                setTimeout(() => {
-                                    this.initializeMap();
-                                    this.listenForUsersAndLocations();
-                                }, 500);
-}
+                                this.listenForUsersAndLocations();
                             } else {
                                 this.userLoggedIn = false;
                                 firebase.auth().signOut();
@@ -88,10 +85,6 @@ const app = new Vue({
                         });
                 } else {
                     this.userLoggedIn = false;
-                    if (this.map) {
-                        this.map.setTarget(null);
-                        this.map = null;
-                    }
                     this.locations = {};
                     this.users = {};
                     this.mergedData = [];
@@ -161,6 +154,7 @@ const app = new Vue({
             this.updateMarkers();
         },
         updateMarkers() {
+            if (!this.source) return;
             this.source.clear();
             this.mergedData.forEach(item => {
                 if (item.lat && item.lng) {
