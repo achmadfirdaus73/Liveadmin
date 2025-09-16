@@ -1,23 +1,119 @@
+/* ========================================= */
+/* General Styles & Fonts              */
+/* ========================================= */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    color: #444;
+    margin: 0;
+    padding: 0;
+}
+
 .container {
-    max-width: 100%;
-}
-
-.login-card {
-    max-width: 400px;
-    margin: 50px auto;
-}
-
-.data-card {
-    max-width: 90%;
+    max-width: 1200px;
     margin: 20px auto;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-.map-container {
-    width: 100%;
-    height: 500px;
+    padding: 20px;
+    background-color: #fff;
     border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+/* ========================================= */
+/* Login Section                       */
+/* ========================================= */
+.login-section {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.login-section h2 {
+    color: #555;
+}
+
+.v-btn--active {
+    background-color: #667eea !important;
+    color: white !important;
+}
+
+/* ========================================= */
+/* Dashboard & Map                     */
+/* ========================================= */
+#dashboard-content {
+    display: none;
+}
+
+#map {
+    height: 500px; /* Atur ketinggian peta */
+    width: 100%; /* Atur lebar peta */
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.leaflet-control-container {
+    font-family: 'Roboto', sans-serif;
+}
+
+/* ========================================= */
+/* Data Table                          */
+/* ========================================= */
+.v-data-table {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.v-data-table-header th {
+    background-color: #667eea;
+    color: white !important;
+    font-weight: bold;
+}
+
+.v-data-table-header th span {
+    color: white !important;
+}
+
+.v-data-table tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+}
+
+.v-data-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.v-data-table .v-btn {
+    color: #667eea;
+    font-size: 14px;
+    text-transform: none;
+}
+
+.v-btn.v-size--default {
+    padding: 0 8px;
+    min-width: 40px;
+}
+
+.v-data-table td, .v-data-table th {
+    padding: 12px;
+}
+
+/* ========================================= */
+/* Snackbar/Notifications              */
+/* ========================================= */
+.v-snack {
+    top: 20px !important;
+}
+
+.v-snack__wrapper {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.v-snack__content {
+    font-weight: 500;
 }
