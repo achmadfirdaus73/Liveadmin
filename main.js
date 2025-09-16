@@ -75,8 +75,11 @@ const app = new Vue({
                                 this.userLoggedIn = true;
                                 this.userEmail = user.email;
                                 this.addNotification('green', 'Berhasil login sebagai admin!');
-                                this.initializeMap();
-                                this.listenForUsersAndLocations();
+                                setTimeout(() => {
+                                    this.initializeMap();
+                                    this.listenForUsersAndLocations();
+                                }, 500);
+}
                             } else {
                                 this.userLoggedIn = false;
                                 firebase.auth().signOut();
