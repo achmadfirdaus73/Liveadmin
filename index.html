@@ -4,109 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ7o4QLmK1j6yq8mKOqLhBv4x3S5k1x0=" crossorigin=""/>
-    
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css"/>
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfBI87S09R9gSfePWeh1gWJ+z+L04fM8=" crossorigin=""/>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="app">
+        <v-app>
+            <v-main>
+                <v-container fluid v-if="userLoggedIn">
+                    <v-row>
+                        <v-col cols="12" class="d-flex align-center">
+                            <h2 class="mr-auto">Dashboard Admin</h2>
+                            <v-btn color="error" @click="logout" small>
+                                Logout
+                            </v-btn>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col cols="12">
+                            <div id="map"></div>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col cols="12">
+                            <h3>Data Karyawan</h3>
+                            <v-data-table
+                                :headers="headers"
+                                :items="mergedData"
+                                :items-per-page="10"
+                                class="elevation-1"
+                            >
+                                <template v-slot:item.lat="{ item }">
+                                    {{ item.lat ? item.lat.toFixed(6) : '-' }}
+                                </template>
+                                <template v-slot:item.lng="{ item }">
+                                    {{ item.lng ? item.lng.toFixed(6) : '-' }}
+                                </template>
+                                <template v-slot:item.accuracy="{ item }">
+                                    {{ item.accuracy ? item.accuracy.toFixed(2) + 'm' : '-' }}
+                                </template>
+                                <template v-slot:item.status="{ item }">
+                                    <v-chip :color="item.status === 'active' ? 'green' : 'red'" dark>
+                                        {{ item.status }}
+                                    </v-chip>
+                                </template>
+                                <template v-slot:item.actions="{ item }">
+                                    <v-btn small color="primary" @click="showLocationOnMap(item)" :disabled="!item.lat">
+                                        Lihat
+                                    </v-btn>
+                                </template>
+                            </v-data-table>
+                        </v-col>
+                    </v-row>
+                </v-container>
 
-<div id="app">
-    <v-app>
-        <v-main>
-            <div class="container">
-                <v-card v-if="!userLoggedIn" class="login-section">
-                    <v-card-title class="headline text-center">Login Admin</v-card-title>
-                    <v-card-text>
-                        <v-btn color="primary" @click="loginWithGoogle" large>
-                            Login dengan Google
-                        </v-btn>
-                    </v-card-text>
-                </v-card>
+                <v-container fluid v-else class="fill-height d-flex justify-center align-center">
+                    <v-card class="login-card" outlined>
+                        <v-card-title>Login Admin</v-card-title>
+                        <v-card-text>
+                            <v-btn color="primary" @click="loginWithGoogle" block>
+                                Login dengan Google
+                            </v-btn>
+                        </v-card-text>
+                    </v-card>
+                </v-container>
+            </v-main>
+        </v-app>
+        
+        <v-snackbar
+            v-model="snackbar.show"
+            :timeout="snackbar.timeout"
+            :color="snackbar.color"
+            top
+        >
+            {{ snackbar.message }}
+            <template v-slot:action="{ attrs }">
+                <v-btn text v-bind="attrs" @click="snackbar.show = false">Tutup</v-btn>
+            </template>
+        </v-snackbar>
+    </div>
 
-                <div v-if="userLoggedIn">
-                    <h1 class="text-center">Dashboard Admin</h1>
-                    <v-container>
-                        <v-row>
-                            <v-col cols="12" class="d-flex justify-space-between align-center">
-                                <h3>Selamat datang, {{ userEmail }}!</h3>
-                                <v-btn color="error" @click="logout">LOGOUT</v-btn>
-                            </v-col>
-                        </v-row>
-                        <v-row>
-                            <v-col cols="12">
-                                <v-card>
-                                    <v-card-text>
-                                        <div id="map"></div>
-                                    </v-card-text>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                        <v-row>
-                            <v-col cols="12">
-                                <v-card>
-                                    <v-card-title>Data Karyawan</v-card-title>
-                                    <v-card-text>
-                                        <v-data-table
-                                            :headers="headers"
-                                            :items="Object.values(locations)"
-                                            :items-per-page="5"
-                                            class="elevation-1"
-                                        >
-                                            <template v-slot:item.accuracy="{ item }">
-                                                <span>{{ item.accuracy ? item.accuracy.toFixed(2) + 'm' : '-' }}</span>
-                                            </template>
-                                            <template v-slot:item.timestamp="{ item }">
-                                                <span>{{ item.localTime }}</span>
-                                            </template>
-                                            <template v-slot:item.status="{ item }">
-                                                <v-chip :color="item.status === 'active' ? 'green' : 'red'" dark>{{ item.status }}</v-chip>
-                                            </template>
-                                            <template v-slot:item.actions="{ item }">
-                                                <v-btn small @click="showLocationOnMap(item)">Lihat di Peta</v-btn>
-                                            </template>
-                                        </v-data-table>
-                                    </v-card-text>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                    </v-container>
-                </div>
-            </div>
-        </v-main>
-    </v-app>
-
-    <v-snackbar
-        v-model="snackbar.show"
-        :color="snackbar.color"
-        :timeout="snackbar.timeout"
-        top
-    >
-        {{ snackbar.message }}
-        <template v-slot:action="{ attrs }">
-            <v-btn
-                color="white"
-                text
-                v-bind="attrs"
-                @click="snackbar.show = false"
-            >
-                Tutup
-            </v-btn>
-        </template>
-    </v-snackbar>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-200w0Gg4E2hBwJ1zL9E3W5c85qE9c9j0y9c0g0f5a4A=" crossorigin=""></script>
-<script src="main.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-200" crossorigin=""></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
+    <script src="main.js">
+        
+    </script>
 </body>
 </html>
