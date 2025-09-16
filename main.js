@@ -35,12 +35,11 @@ const app = new Vue({
         snackbar: {
             show: false,
             message: '',
-            color: '',
+            color: 'info',
             timeout: 3000
         }
     }),
     mounted() {
-        this.initializeMap();
         this.monitorAuthStatus();
     },
     methods: {
@@ -72,10 +71,16 @@ const app = new Vue({
                     firebase.database().ref('admins/' + userId).once('value')
                         .then(snapshot => {
                             const isAdmin = snapshot.val();
-                            if (isAdmin) {
+                            if (isAdmin === true) {
                                 this.userLoggedIn = true;
                                 this.userEmail = user.email;
                                 this.addNotification('green', 'Berhasil login sebagai admin!');
+
+                                // Map baru di-init setelah login & DOM siap
+                                this.$nextTick(() => {
+                                    this.initializeMap();
+                                });
+
                                 this.listenForUsersAndLocations();
                             } else {
                                 this.userLoggedIn = false;
@@ -92,8 +97,11 @@ const app = new Vue({
             });
         },
         initializeMap() {
-            if (this.map) return;
-            
+            if (this.map) {
+                this.$nextTick(() => this.map.updateSize());
+                return;
+            }
+
             this.source = new ol.source.Vector();
             this.vectorLayer = new ol.layer.Vector({
                 source: this.source,
@@ -104,13 +112,11 @@ const app = new Vue({
                     })
                 })
             });
-            
+
             this.map = new ol.Map({
                 target: 'map',
                 layers: [
-                    new ol.layer.Tile({
-                        source: new ol.source.OSM()
-                    }),
+                    new ol.layer.Tile({ source: new ol.source.OSM() }),
                     this.vectorLayer
                 ],
                 view: new ol.View({
@@ -118,17 +124,22 @@ const app = new Vue({
                     zoom: 13
                 })
             });
+
+            // Fix map blank putih
+            this.$nextTick(() => {
+                this.map.updateSize();
+            });
         },
         listenForUsersAndLocations() {
             const usersRef = firebase.database().ref('users');
             const locationsRef = firebase.database().ref('location-data');
-            
+
             usersRef.on('value', snapshot => {
                 const allUsers = snapshot.val() || {};
                 this.users = allUsers;
                 this.mergeData();
             });
-            
+
             locationsRef.on('value', snapshot => {
                 const allLocations = snapshot.val() || {};
                 this.locations = allLocations;
@@ -137,12 +148,13 @@ const app = new Vue({
         },
         mergeData() {
             const merged = Object.values(this.users).map(user => {
-                const location = this.locations[user.userId] ? this.locations[user.userId].latest : null;
+                const uid = user.userId || 'unknown';
+                const location = this.locations[uid]?.latest || null;
                 const status = location ? location.status : 'offline';
-                
+
                 return {
                     namaKaryawan: user.nama || 'Nama Tidak Diketahui',
-                    userId: user.userId,
+                    userId: uid,
                     lat: location ? location.lat : null,
                     lng: location ? location.lng : null,
                     accuracy: location ? location.accuracy : null,
@@ -165,6 +177,9 @@ const app = new Vue({
                     feature.set('id', item.userId);
                     this.source.addFeature(feature);
                 }
+            });
+            this.$nextTick(() => {
+                this.map?.updateSize();
             });
         },
         showLocationOnMap(location) {
