@@ -17,6 +17,8 @@ const firebaseConfig = {
             userLoggedIn: false,
             userEmail: '',
             locations: {},
+            users: {}, // Tambahan: Data pengguna dari node 'users'
+            mergedData: [], // Tambahan: Gabungan data pengguna dan lokasi
             map: null,
             markers: {},
             headers: [{
@@ -89,7 +91,7 @@ const firebaseConfig = {
                                     this.userEmail = user.email;
                                     this.addNotification('green', 'Berhasil login sebagai admin!');
                                     this.initializeMap();
-                                    this.listenForLocations();
+                                    this.listenForUsersAndLocations(); // Diganti: Memantau pengguna dan lokasi
                                 } else {
                                     this.userLoggedIn = false;
                                     firebase.auth().signOut();
@@ -103,6 +105,8 @@ const firebaseConfig = {
                             this.map = null;
                         }
                         this.locations = {};
+                        this.users = {};
+                        this.mergedData = [];
                     }
                 });
             },
@@ -113,25 +117,53 @@ const firebaseConfig = {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(this.map);
             },
-            listenForLocations() {
+            // --- KODE BARU: Gabungkan data dari 'users' dan 'location-data' ---
+            listenForUsersAndLocations() {
+                const usersRef = firebase.database().ref('users');
                 const locationsRef = firebase.database().ref('location-data');
-                locationsRef.on('child_changed', snapshot => {
-                    const userId = snapshot.key;
-                    const latestData = snapshot.val().latest;
-                    this.locations = { ...this.locations, [userId]: { ...latestData, userId: userId } };
-                    this.updateMarker(userId, latestData);
+                
+                usersRef.on('value', snapshot => {
+                    const allUsers = snapshot.val() || {};
+                    this.users = allUsers;
+                    this.mergeData();
                 });
-                locationsRef.once('value', snapshot => {
-                    const allLocations = snapshot.val();
-                    if (allLocations) {
-                        Object.keys(allLocations).forEach(userId => {
-                            const latestData = allLocations[userId].latest;
-                            this.locations = { ...this.locations, [userId]: { ...latestData, userId: userId } };
-                            this.updateMarker(userId, latestData);
-                        });
+                
+                locationsRef.on('value', snapshot => {
+                    const allLocations = snapshot.val() || {};
+                    this.locations = allLocations;
+                    this.mergeData();
+                });
+            },
+            mergeData() {
+                const merged = Object.values(this.users).map(user => {
+                    const location = this.locations[user.userId] ? this.locations[user.userId].latest : null;
+                    const status = location ? location.status : 'offline';
+                    
+                    return {
+                        namaKaryawan: user.nama || 'Nama Tidak Diketahui',
+                        userId: user.userId,
+                        lat: location ? location.lat : null,
+                        lng: location ? location.lng : null,
+                        accuracy: location ? location.accuracy : null,
+                        timestamp: location ? location.localTime : '-',
+                        status: status,
+                        // Tambahkan data lain yang lo butuhkan
+                    };
+                });
+                this.mergedData = merged;
+                
+                // Perbarui marker di peta
+                this.mergedData.forEach(item => {
+                    if (item.lat && item.lng) {
+                        this.updateMarker(item.userId, item);
+                    } else if (this.markers[item.userId]) {
+                        // Hapus marker jika pengguna offline
+                        this.map.removeLayer(this.markers[item.userId]);
+                        delete this.markers[item.userId];
                     }
                 });
             },
+            // ------------------------------------------------------------------
             updateMarker(userId, location) {
                 const lat = location.lat;
                 const lng = location.lng;
@@ -140,13 +172,13 @@ const firebaseConfig = {
                         this.markers[userId].setLatLng([lat, lng]);
                     } else {
                         const marker = L.marker([lat, lng]).addTo(this.map);
-                        marker.bindPopup(`<b>${location.namaKaryawan}</b><br>Lat: ${lat.toFixed(4)}<br>Lng: ${lng.toFixed(4)}<br>Akurasi: ${location.accuracy.toFixed(2)} m<br>Waktu: ${new Date(location.unixTime).toLocaleString()}`);
+                        marker.bindPopup(`<b>${location.namaKaryawan}</b><br>Lat: ${lat ? lat.toFixed(4) : '-'}<br>Lng: ${lng ? lng.toFixed(4) : '-'}<br>Akurasi: ${location.accuracy ? location.accuracy.toFixed(2) + ' m' : '-'}<br>Waktu: ${location.timestamp}`);
                         this.markers[userId] = marker;
                     }
                 }
             },
             showLocationOnMap(location) {
-                if (this.map) {
+                if (this.map && location.lat && location.lng) {
                     this.map.flyTo([location.lat, location.lng], 16);
                     if (this.markers[location.userId]) {
                         this.markers[location.userId].openPopup();
