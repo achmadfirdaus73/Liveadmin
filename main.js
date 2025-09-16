@@ -1,12 +1,12 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyCalf-RcByWIxdE3kyhcWwNwd8kSGX_fLE",
-  authDomain: "absensi2-741f0.firebaseapp.com",
-  databaseURL: "https://absensi2-741f0-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "absensi2-741f0",
-  storageBucket: "absensi2-741f0.firebasestorage.app",
-  messagingSenderId: "747934727309",
-  appId: "1:747934727309:web:0c1fbacd980c4bdf2bb6c4",
-  measurementId: "G-DGLR9P3Z33"
+    apiKey: "AIzaSyCdT2nWv0fF6jZmDfslIUvRKFun18rStWs", // <--- APAKAH SAMA?
+    authDomain: "tracking-654e3.firebaseapp.com",
+    databaseURL: "https://tracking-654e3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tracking-654e3", // <--- APAKAH SAMA?
+    storageBucket: "tracking-654e3.firebasestorage.app",
+    messagingSenderId: "61074342637",
+    appId: "1:61074342637:web:ee566c965c595668b5c2e4",
+    measurementId: "G-Q5ZXKE7PTL"
 };
 firebase.initializeApp(firebaseConfig);
 
