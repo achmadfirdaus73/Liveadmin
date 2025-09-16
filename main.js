@@ -52,7 +52,7 @@ const app = new Vue({
       timeout: 3000
     },
     // Daftar email admin yang diizinkan
-    adminEmails: ['admin1@example.com', 'admin2@example.com'],
+    adminEmails: ['achmadfirdaus831@gmail.com', 'achmadfirdaus0910@gmail.com'],
   }),
   mounted() {
     this.monitorAuthStatus();
