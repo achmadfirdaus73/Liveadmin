@@ -4,101 +4,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    
-    <link rel="stylesheet" href="style.css">
-    
-    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
-    
-    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="ol.css" type="text/css">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"/>
+       
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
     <div id="app">
-        <v-app>
-            <v-main>
-                <v-container fluid v-if="userLoggedIn">
-                    <v-row>
-                        <v-col cols="12" class="d-flex align-center">
-                            <h2 class="mr-auto">Dashboard Admin</h2>
-                            <v-btn color="error" @click="logout" small>
-                                Logout
-                            </v-btn>
-                        </v-col>
-                    </v-row>
-                    <v-row>
-                        <v-col cols="12">
-                            <div id="map"></div>
-                        </v-col>
-                    </v-row>
-                    <v-row>
-                        <v-col cols="12">
-                            <h3>Data Karyawan</h3>
-                            <v-data-table
-                                :headers="headers"
-                                :items="mergedData"
-                                :items-per-page="10"
-                                class="elevation-1"
-                            >
-                                <template v-slot:item.lat="{ item }">
-                                    {{ item.lat ? item.lat.toFixed(6) : '-' }}
-                                </template>
-                                <template v-slot:item.lng="{ item }">
-                                    {{ item.lng ? item.lng.toFixed(6) : '-' }}
-                                </template>
-                                <template v-slot:item.accuracy="{ item }">
-                                    {{ item.accuracy ? item.accuracy.toFixed(2) + 'm' : '-' }}
-                                </template>
-                                <template v-slot:item.status="{ item }">
-                                    <v-chip :color="item.status === 'active' ? 'green' : 'red'" dark>
-                                        {{ item.status }}
-                                    </v-chip>
-                                </template>
-                                <template v-slot:item.actions="{ item }">
-                                    <v-btn small color="primary" @click="showLocationOnMap(item)" :disabled="!item.lat">
-                                        Lihat
-                                    </v-btn>
-                                </template>
-                            </v-data-table>
-                        </v-col>
-                    </v-row>
-                </v-container>
+        <!-- Login Screen -->
+        <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+            <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+                <h1 class="text-2xl font-bold text-center mb-6">Admin Dashboard</h1>
+                <p class="text-gray-600 text-center mb-8">Silakan login untuk melanjutkan</p>
+                
+                <button id="loginBtn" class="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition duration-200 flex items-center justify-center">
+                    <i class="fab fa-google mr-2"></i>
+                    Login dengan Google
+                </button>
+            </div>
+        </div>
 
-                <v-container fluid v-else class="fill-height d-flex justify-center align-center">
-                    <v-card class="login-card" outlined>
-                        <v-card-title>Login Admin</v-card-title>
-                        <v-card-text>
-                            <v-btn color="primary" @click="loginWithGoogle" block>
-                                Login dengan Google
-                            </v-btn>
-                        </v-card-text>
-                    </v-card>
-                </v-container>
-            </v-main>
-        </v-app>
-        
-        <v-snackbar
-            v-model="snackbar.show"
-            :timeout="snackbar.timeout"
-            :color="snackbar.color"
-            top
-        >
-            {{ snackbar.message }}
-            <template v-slot:action="{ attrs }">
-                <v-btn text v-bind="attrs" @click="snackbar.show = false">Tutup</v-btn>
-            </template>
-        </v-snackbar>
+        <!-- Dashboard Screen -->
+        <div id="dashboardScreen" class="min-h-screen hidden">
+            <!-- Header -->
+            <header class="bg-white shadow">
+                <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                        <div class="flex items-center space-x-4">
+                            <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200">
+                                <i class="fas fa-moon text-gray-700"></i>
+                            </button>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center mr-2" id="adminProfilePicture">
+                                    <i class="fas fa-user text-gray-500 text-sm"></i>
+                                </div>
+                                <span className="text-gray-700 mr-4" id="adminName">Admin</span>
+                                <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
+                        <p className="text-3xl font-bold text-blue-600" id="totalUsers">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-lg font-medium text-gray-900">Active Users</h3>
+                        <p className="text-3xl font-bold text-green-600" id="activeUsers">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-lg font-medium text-gray-900">Inactive Users</h3>
+                        <p className="text-3xl font-bold text-red-600" id="inactiveUsers">0</p>
+                    </div>
+                </div>
+
+                <!-- Map and Table -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Map -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 className="text-xl font-semibold mb-4">User Locations</h2>
+                        <div id="map"></div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 className="text-xl font-semibold mb-4">User Management</h2>
+                        
+                        <div className="flex flex-col md:flex-row gap-4 mb-4">
+                            <input
+                                type="text"
+                                id="searchInput"
+                                placeholder="Search users..."
+                                className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <select
+                                id="statusFilter"
+                                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <button
+                                id="exportBtn"
+                                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-200"
+                            >
+                                Export CSV
+                            </button>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            User
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Location
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Last Update
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200" id="userTableBody">
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                            Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h2 className="text-xl font-semibold mb-4">Activity Overview</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 className="text-lg font-medium mb-4">User Status Distribution</h3>
+                            <canvas id="statusChart" width="400" height="300"></canvas>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-medium mb-4">Hourly Activity</h3>
+                            <canvas id="hourlyChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
-    
-    <script src="ol.js"></script>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 translate-y-full opacity-0">
+        <span id="toastMessage"></span>
+    </div>
 
     <script src="main.js"></script>
 </body>
