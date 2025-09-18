@@ -1,3 +1,8 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+
 const firebaseConfig = {
     apiKey: "AIzaSyCdT2nWv0fF6jZmDfslIUvRKFun18rStWs",
     authDomain: "tracking-654e3.firebaseapp.com",
